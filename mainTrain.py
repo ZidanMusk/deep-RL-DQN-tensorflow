@@ -9,7 +9,9 @@ from Q_Learner import DQN
 #gym env name
 ENV_NAME = 'Breakout-v0'
 #max episodes to run
-MAX_EPISODES = 1000
+MAX_EPISODES = 10000
+#save model every ? episodes
+SAVE_EVERY = 5 
 #max update steps to run
 MAX_STEPS = 250000
 #use double DQN
@@ -51,10 +53,14 @@ def main():
 			#call util summmaries
 			dqn.util.summary_board(sess,step.eval(),forTrain = TRAINING)
 			
-			#if (step + 1) % 1000 == 0 or (step + 1) == MAX_STEPS:
-			if ep % 2 == 0 or (ep + 1) == MAX_EPISODES:
+			if ((ep % SAVE_EVERY == 0) or ((ep + 1) == MAX_EPISODES)):
 				dqn.util.save_graph(sess,step.eval(),save2play = True)
 				print('Trained for  %.3f  hrs' %(dqn.training_hrs))
+
+			if (step.eval() >= MAX_STEPS):
+				dqn.util.save_graph(sess,step.eval(),save2play = True)
+				print('Finished Training for %.0f Frames!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(step.eval()*4,dqn.training_hrs))
+				break
 			
 
 			

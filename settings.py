@@ -3,12 +3,13 @@
 
 class AgentSetting():
 	
-	minibatch = 4#16 #32
+	minibatch = 16 #32
 	
+	''''commented values are the used ones in the nature paper, use them if you got that much of computing power'''
 	replay_strt_size = 32 #50000 # at start use randm policy for this time to fill memory b4 learning
-	replay_memory = 128 #300000 #1000000
+	replay_memory = 128 #1000000
 	
-	t_net_update_freq = 100#10000
+	t_net_update_freq = 100 #10000
 	
 	discount_factor = 0.99
 	

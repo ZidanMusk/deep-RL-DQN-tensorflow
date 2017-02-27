@@ -1,3 +1,4 @@
+#TODO TF & restoring
 import numpy as np
 import random
 
