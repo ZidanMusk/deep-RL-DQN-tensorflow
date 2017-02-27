@@ -1,8 +1,8 @@
-'''FOR TRAINING RUN THIS'''
+'''FOR PLAYING/EVALUATION RUN THIS'''
 
 import time
-import tensorflow as tf
 from tqdm import tqdm
+import tensorflow as tf
 from Q_Learner import DQN
 
 
