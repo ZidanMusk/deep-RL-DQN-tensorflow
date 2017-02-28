@@ -14,7 +14,7 @@ MAX_EPISODES = 10000
 #save model every ? episodes
 SAVE_EVERY = 5 
 #max update steps to run
-MAX_STEPS = AgentSetting.trained_frames / AgentSetting.update_freq
+MAX_STEPS = AgentSetting.training_steps
 #use double DQN
 DOUBLE_DQN = False
 #use dueling DQN
@@ -39,26 +39,33 @@ def main():
 		dqn.fill_memory(sess)
 		
 		step = tf.train.get_global_step() # gets global step defined in dqn as tensor
+		episodeNum = dqn.training_episodes #current episode as tensor
 
-		print("Initial global step =  {}".format(step.eval()))
+		print("Starting training at Episode {} and Step {}...".format(episodeNum.eval(),step.eval()))
 		
+		#TODO deprecate looping on episodes
 		for ep in tqdm(xrange(MAX_EPISODES)):# for episodes
 			
-			print("Episode no. {} :".format(ep+1))
+			cumulatedSteps = step.eval()
+			curEpNum = episodeNum.eval() 
 			
-			dqn.learning(sess) #an episode is done
+			dqn.learning(sess) #returns when an episode is done
 			
-			print('Step %d: totalEpReward = %.2f , totLoss = %.4f  (%.3f sec)' % (step.eval(), dqn.totalReward,dqn.totalLoss,dqn.duration))
-			print('Trained for  %.3f  hrs' %(dqn.training_hrs))
+			print ('Finished Episode no. %d  in %.3f secs...with ::' % (curEpNum, dqn.duration))
+			print('Ep.Steps %d...total Ep.Reward = %.2f, total Ep.Loss = %.4f' % (step.eval()-cumulatedSteps, dqn.totalReward, dqn.totalLoss))
+			print('Trained for : %d steps and %d episodes in %.3f  hrs' %(step.eval(), curEpNum+1, dqn.training_hrs))			
 			
-			#call util summmaries
+			#saves summmaries for tensorboard
 			dqn.util.summary_board(sess,step.eval(),forTrain = TRAINING)
 			
 			if ((ep % SAVE_EVERY == 0) or ((ep + 1) == MAX_EPISODES)):
+
+				#saves all tf graph nodes, and if(save2play) saves online weights for evaluation(via mainPlay.py)
 				dqn.util.save_graph(sess,step.eval(),save2play = True)
-				print('Trained for  %.3f  hrs' %(dqn.training_hrs))
+				#print('Trained for : %d steps and  %.3f  hrs' %(step.eval(),dqn.training_hrs))
 
 			if (step.eval() >= MAX_STEPS):
+
 				dqn.util.save_graph(sess,step.eval(),save2play = True)
 				print('Finished Training for %.0f Frames!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(step.eval()* AgentSetting.update_freq,dqn.training_hrs))
 				break

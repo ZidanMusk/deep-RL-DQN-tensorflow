@@ -38,7 +38,7 @@ class Environment(object):
 	def numActions(self):
 		return self.env.action_space.n
 
-	pass #TODO APPLY
+	
 	def takeRandomAction(self):
 		return self.env.action_space.sample()
 

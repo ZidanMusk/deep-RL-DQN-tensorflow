@@ -11,7 +11,7 @@ from memory import ExperienceMemory
 from StateProcessor import StateProcessor
 from settings import AgentSetting, EnvSetting
 
-#TDO clip loss b/n [-1,1]
+#TODO clip loss b/n [-1,1]
 
 class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 
@@ -26,10 +26,9 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			self.discount_factor = AgentSetting.discount_factor
 			self.update_freq = AgentSetting.update_freq
 			
-
-
 			self.learning_rate = AgentSetting.learning_rate
-			
+			self.momentum = AgentSetting.momentum
+
 			self.e_greedy_init = AgentSetting.e_greedy_init
 			self.e_greedy_final = AgentSetting.e_greedy_final
 			self.e_final_at = AgentSetting.e_final_at
@@ -52,14 +51,14 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			self.countL = 0
 
 			pass #https://www.tensorflow.org/api_docs/python/tf/train/RMSPropOptimizer
-			self.optimizer = tf.train.AdamOptimizer()
-			#self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=0.9, momentum=0.0, epsilon=1e-10)
+			self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=0.9, momentum=self.momentum, epsilon=1e-10)
 			self.train_step = self.optimizer.minimize(self.loss,global_step = self.global_step)
 			
 			self.training_hrs = tf.Variable(0.0, trainable=False,name='training_hrs')
+			self.training_episodes = tf.Variable(0,trainable = False , name = "training_episodes")
 
 		else:
-			self.epsilon = tf.constant(0.05,dtype=tf.float32)
+			self.epsilon = tf.constant(AgentSetting.epsilon_eval,dtype=tf.float32)
 		
 		#keep in order
 		self.util = Utility(env_name, doubleQ, dueling,training)
@@ -269,6 +268,9 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 				
 				self.duration = round(time.time() - self.startTime, 3) #secs
 				self.training_hrs = tf.add(self.training_hrs,((self.duration/60.0)/60.0)).eval()
+				incEpisode = self.training_episodes.assign_add(1)
+				incEpisode.eval()
+
 				#update tf board
 				self.summaries()
 				

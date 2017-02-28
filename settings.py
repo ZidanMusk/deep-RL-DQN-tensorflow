@@ -15,10 +15,15 @@ class AgentSetting():
 	discount_factor = 0.99
 	
 	update_freq = 4 #update net every 4 actions
-	trained_frames = 50000000 #50 millon frames to be trained on 
 	
+	#nature paper:50 million frames to be trained on 
+	#double DQN paper: 200 million frames,ie, 50M steps 
+	training_steps = 50000000 
+	
+	#RMSProp 
 	learning_rate = 0.00025
-	#RMSProp #deprecated
+	momentum = 0.95
+	#deprecated
 	#grad_momentum = 0.95
 	#sq_grad_momentum = 0.95
 	#min_sq_grad = 0.01
@@ -29,7 +34,10 @@ class AgentSetting():
 
 	e_final_at = 1000000 #frames over which epsilon is annealed to its final value
 
+	#TODO apply 
 	no_op_max = 30 #max of no-op action
+	eval_every = 1000000 #steps
+	epsilon_eval = 0.05
 
 class ArchitectureSetting():
 	
