@@ -11,7 +11,7 @@ from memory import ExperienceMemory
 from StateProcessor import StateProcessor
 from settings import AgentSetting, EnvSetting
 
-
+#TDO clip loss b/n [-1,1]
 
 class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 
@@ -69,7 +69,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		self.actions = np.arange(self.num_action)
 		
 		pass
-		print ("POSSIBLE ACTION :", self.actions)
+		print ("POSSIBLE ACTIONS :", self.actions)
 		
 		self.deepNet = Brain(self.num_action,training)
 		
@@ -106,7 +106,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		for v in tqdm(range(self.replay_strt_size)):
  
 			#select  an action randomly
-			action = np.random.choice(np.arange(self.num_action))
+			action = self.env.takeRandomAction()
 			#print action
 			reward , done = self.env.step(action,sess)
 
@@ -122,9 +122,10 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			else:
 				state = nxt_state
 		pass
+		print ("Waiting for current episode to be terminated...")
 		while not done:
 			#select  an action randomly
-			action = np.random.choice(np.arange(self.num_action))
+			action = self.env.takeRandomAction()
 			reward , done = self.env.step(action,sess)
 
 
@@ -149,7 +150,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		
 		action_probs[greedy_choice] += 1.0 - self.epsilon.eval()
 
-		action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
+		action = np.random.choice(self.actions, p=action_probs)
 		
 		#decay epsilon
 		if self.training:

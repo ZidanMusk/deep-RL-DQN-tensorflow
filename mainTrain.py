@@ -4,16 +4,17 @@ import time
 import tensorflow as tf
 from tqdm import tqdm
 from Q_Learner import DQN
-
+from settings import AgentSetting
 
 #gym env name
 ENV_NAME = 'Breakout-v0'
-#max episodes to run
+#max episodes to run 
+#TODO Deprecate it
 MAX_EPISODES = 10000
 #save model every ? episodes
 SAVE_EVERY = 5 
 #max update steps to run
-MAX_STEPS = 250000
+MAX_STEPS = AgentSetting.trained_frames / AgentSetting.update_freq
 #use double DQN
 DOUBLE_DQN = False
 #use dueling DQN
@@ -43,7 +44,7 @@ def main():
 		
 		for ep in tqdm(xrange(MAX_EPISODES)):# for episodes
 			
-			print("Episode no. {} :".format(ep))
+			print("Episode no. {} :".format(ep+1))
 			
 			dqn.learning(sess) #an episode is done
 			
@@ -59,7 +60,7 @@ def main():
 
 			if (step.eval() >= MAX_STEPS):
 				dqn.util.save_graph(sess,step.eval(),save2play = True)
-				print('Finished Training for %.0f Frames!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(step.eval()*4,dqn.training_hrs))
+				print('Finished Training for %.0f Frames!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(step.eval()* AgentSetting.update_freq,dqn.training_hrs))
 				break
 			
 

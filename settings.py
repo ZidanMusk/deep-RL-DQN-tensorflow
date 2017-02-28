@@ -3,9 +3,10 @@
 
 class AgentSetting():
 	
+	''''commented values are the used ones in the nature paper, use them if you got that much of computing power'''
+
 	minibatch = 16 #32
 	
-	''''commented values are the used ones in the nature paper, use them if you got that much of computing power'''
 	replay_strt_size = 32 #50000 # at start use randm policy for this time to fill memory b4 learning
 	replay_memory = 128 #1000000
 	
@@ -14,7 +15,7 @@ class AgentSetting():
 	discount_factor = 0.99
 	
 	update_freq = 4 #update net every 4 actions
-	
+	trained_frames = 50000000 #50 millon frames to be trained on 
 	
 	learning_rate = 0.00025
 	#RMSProp #deprecated
@@ -26,7 +27,7 @@ class AgentSetting():
 	e_greedy_init = 1.0
 	e_greedy_final = 0.1
 
-	e_final_at = 1000000 #frames
+	e_final_at = 1000000 #frames over which epsilon is annealed to its final value
 
 	no_op_max = 30 #max of no-op action
 
