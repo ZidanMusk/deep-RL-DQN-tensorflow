@@ -14,7 +14,7 @@ SAVE_EVERY = 5
 #max update steps to run
 MAX_STEPS = AgentSetting.training_steps
 #use double DQN
-DOUBLE_DQN = False
+DOUBLE_DQN = True
 #use dueling DQN
 DUELING_DQN = False
 
@@ -23,7 +23,6 @@ TRAINING  = True # training =true , playing= false
 
 def main():
 
-	#init all
 	dqn = DQN(ENV_NAME, DOUBLE_DQN, DUELING_DQN, TRAINING)
 	
 	with tf.Session() as sess:

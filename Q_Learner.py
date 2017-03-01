@@ -88,9 +88,9 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		self.duration = 0.0
 		self.updates = 0
 		
-		if doubleQ or dueling:
-			raise Exception('Double/Dueling DQN is under construction.') 
-
+		if dueling:
+			raise Exception('Dueling DQN is under construction.') 
+		self.doubleQ = doubleQ
 
 	pass 
 	#fill memory
@@ -228,18 +228,33 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 				
 				#sample  a minibatch
 				state_batch, action_batch, reward_batch, done_batch, nxt_state_batch = self.replay_memory.sample(self.minibatch)
-				pass 
-				
-				#1- make a one step look ahead
-				nxtState_qValue = self.deepNet.T_nn(forSess = True).eval(feed_dict = { self.net_feed : nxt_state_batch }) #target network
+				pass
 
-				pass 
-				#2- be greedy and select nxt action (of nxt state)
-				nxtState_qValueSelected = tf.reduce_max(nxtState_qValue, axis= 1)
+				if self.doubleQ:
+					'''DoubleQ aims to reduce overestimations of Q-values by decoupling action selection from action evaluation in target calculation''' 
+					
+					#1- action selection using Q-net(online net)
+					nxtState_qValue4Selection = self.deepNet.Q_nn(forSess = True).eval(feed_dict = { self.net_feed : nxt_state_batch })#online network	
+					selectedAction = tf.one_hot( indices = tf.argmax(nxtState_qValue4Selection, axis = 1), depth = self.num_action, axis =-1,dtype = tf.float32,on_value = 1.0 , off_value = 0.0).eval()
+
+					#2- action evaluation using T-net (target net)
+					nxtState_qValue4Evaluation = self.deepNet.T_nn(forSess = True).eval(feed_dict = { self.net_feed : nxt_state_batch }) #target network
+					nxtState_qValueSelected =tf.reduce_sum(tf.multiply( nxtState_qValue4Evaluation, selectedAction),axis =1) #elementwise 
+				
+				else:
+					#1- make a one step look ahead
+					nxtState_qValue = self.deepNet.T_nn(forSess = True).eval(feed_dict = { self.net_feed : nxt_state_batch }) #target network
+
+					pass 
+					#2- be greedy and select nxt action (of nxt state)
+					nxtState_qValueSelected = tf.reduce_max(nxtState_qValue, axis= 1)
+
 
 				#3 - compute td-target
 				td_target = reward_batch + np.invert(done_batch).astype(np.float32) * self.discount_factor * nxtState_qValueSelected.eval()
 				
+				
+
 				#4 - current state Q-values predictions #trainable!
 				curState_qValue = self.deepNet.Q_nn(forSess = True)
 				
@@ -253,7 +268,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 				pass
 				#6 - run...run...run
 				ss, loss, _ = sess.run([updateSelectedActionValue,self.loss,self.train_step],feed_dict = {self.net_feed : state_batch , self.td_target : td_target})
-				print ("loss" ,loss)
+				print ("loss %.3f at step %d" %(loss, self.global_step.eval()))
 				
 				#stats
 				self.totalLoss += loss

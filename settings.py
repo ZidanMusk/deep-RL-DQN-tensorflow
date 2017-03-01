@@ -34,7 +34,7 @@ class AgentSetting():
 
 	e_final_at = 1000000 #frames over which epsilon is annealed to its final value
 
-	#TODO apply 
+	#TODO apply evalution every 1M steps!
 	no_op_max = 30 #max of no-op action
 	eval_every = 1000000 #steps
 	epsilon_eval = 0.05
