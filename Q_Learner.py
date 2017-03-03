@@ -223,7 +223,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			experience = (state , action , reward, done , nxt_state)
 			self.replay_memory.add(experience)
 		
-			if((t) % self.update_freq == 0):
+			if((t+1) % self.update_freq == 0):
 				
 				
 				#sample  a minibatch
