@@ -12,7 +12,7 @@ class Environment(object):
  		self.env_name = env_name
 		env = gym.make(self.env_name)
 
-	 	self.env = gym.wrappers.Monitor(env, monitorDir, video_callable= (lambda count: count % EnvSetting.recEvery == 0),resume = True,force= False,mode = 'evaluation')
+	 	self.env = gym.wrappers.Monitor(env, monitorDir, video_callable=(lambda count: count % EnvSetting.recEvery == 0),resume = True,force= False,mode = 'evaluation')
 		
 		self.VALID_ACTIONS = self.numActions()
 
@@ -34,6 +34,13 @@ class Environment(object):
 			self.prev_frame = tf.get_variable(name = 'prev_frame', shape = self.frame_size, dtype = tf.uint8, trainable = False)
 			self.cur_frame = tf.get_variable(name = 'cur_frame', shape = self.frame_size, dtype = tf.uint8, trainable = False)
 
+			self.prev_frameHolder = tf.placeholder(dtype = tf.uint8)
+			self.prev_frameAssigner = self.prev_frame.assign(self.prev_frameHolder)
+			self.prev_frameResetter = self.prev_frame.assign(self.prev_frame.initialized_value())
+
+			self.cur_frameHolder = tf.placeholder(dtype=tf.uint8)
+			self.cur_frameAssigner = self.cur_frame.assign(self.cur_frameHolder)
+
 
 	def numActions(self):
 		return self.env.action_space.n
@@ -46,11 +53,10 @@ class Environment(object):
 	#take a step given an action
 	def step(self, action,sess):
 		self.observation, self.reward, self.done, _ = self.env.step(action)
-		
-		new_prev = tf.assign(self.prev_frame, tf.get_default_graph().get_tensor_by_name('input/cur_frame:0'))
-		new_cur = tf.assign(self.cur_frame , self.observation)
 
-		x,y = sess.run([new_cur, new_cur])
+		sess.run(self.prev_frameAssigner, feed_dict = {self.prev_frameHolder : self.cur_frame.eval()})
+		sess.run(self.cur_frameAssigner, feed_dict={self.cur_frameHolder: self.observation})
+
 		
 		#clip all +ve rewards to +1 and all -ve to -1
 		self._clip_reward()
@@ -85,10 +91,7 @@ class Environment(object):
 		
 		self.observation = self.env.reset()
 
-		new_prev = self.prev_frame.initializer
-		new_cur = tf.assign(self.cur_frame , tf.convert_to_tensor(self.observation))
-
-		sess.run([new_prev,new_cur])
+		sess.run([self.prev_frameResetter,self.cur_frameAssigner], feed_dict={self.cur_frameHolder: self.observation})
 		
 
 	#render
@@ -96,4 +99,3 @@ class Environment(object):
 
 		if self.render_bool:
 			self.env.render()
-
