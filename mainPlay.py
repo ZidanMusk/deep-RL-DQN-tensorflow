@@ -22,10 +22,11 @@ TRAINING  = False # training =true , playing= false
 def main():
 
 	dqn = DQN(ENV_NAME, DOUBLE_DQN, DUELING_DQN, TRAINING)
-	
+
+	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
 	with tf.Session() as sess:
-		
-		init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
+
 		sess.run(init_op)
 		#tries to restore a trained model and play!
 		dqn.util.restore_graph(sess,forTrain = TRAINING)
