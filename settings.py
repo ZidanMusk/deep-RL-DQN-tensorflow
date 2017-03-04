@@ -7,10 +7,10 @@ class AgentSetting():
 
 	minibatch = 16 #32
 	
-	replay_strt_size = 32 #50000 # at start use randm policy for this time to fill memory b4 learning
-	replay_memory = 128 #1000000
+	replay_strt_size = 1000 #50000 # at start use randm policy for this time to fill memory b4 learning
+	replay_memory = 5000 #1000000
 	
-	t_net_update_freq = 100 #10000
+	t_net_update_freq = 200 #10000
 	
 	discount_factor = 0.99
 	
@@ -66,7 +66,7 @@ class StateProcessorSetting():
 		
 class EnvSetting():
 	
-	recEvery = 2 #rec every ? step
+	recEvery = 10 #rec every ?
 	'''gym:Each action is repeatedly performed for a duration of k frames, where k is uniformly sampled from {2, 3, 4}.'''
 	action_repeat = 1 #4 
 	
