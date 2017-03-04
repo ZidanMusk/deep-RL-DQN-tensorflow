@@ -92,7 +92,6 @@ class Environment(object):
 		self.observation = self.env.reset()
 
 		sess.run([self.prev_frameResetter,self.cur_frameAssigner], feed_dict={self.cur_frameHolder: self.observation})
-		
 
 	#render
 	def render(self):
