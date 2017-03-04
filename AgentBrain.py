@@ -101,7 +101,7 @@ class Brain(object):
 			self.T_nn()
 
 	
-	def _conv2d( self,inn , kernel , strd, bias):
+	def _conv2d(self,inn , kernel , strd, bias):
 		
 		return tf.nn.bias_add(tf.nn.conv2d(inn, kernel , strides=[1, strd, strd, 1], padding ="SAME"), bias)
  
@@ -125,52 +125,56 @@ class Brain(object):
 
 	def Q_nn(self,forSess = False):
 
-		h1 = self._activation_fn(self._conv2d( self.nn_input, self.Q_l1_w, self.l1_strd, self.Q_l1_b ) )
+		if not forSess:
+			h1 = self._activation_fn(self._conv2d( self.nn_input, self.Q_l1_w, self.l1_strd, self.Q_l1_b ) )
 
-		h2 = self._activation_fn(self._conv2d(h1,self.Q_l2_w, self.l2_strd, self.Q_l2_b))
+			h2 = self._activation_fn(self._conv2d(h1,self.Q_l2_w, self.l2_strd, self.Q_l2_b))
 
-		h3 = self._activation_fn(self._conv2d(h2,self.Q_l3_w, self.l3_strd , self.Q_l3_b))
+			h3 = self._activation_fn(self._conv2d(h2,self.Q_l3_w, self.l3_strd , self.Q_l3_b))
 
-		flat_h3 = self._flatten_fn(h3)
-		
-		h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.Q_l4_w ,self.Q_l4_b))
+			flat_h3 = self._flatten_fn(h3)
 
-		qValuePrediction = self._classic_fc( h4_fc, self.Q_lOut_w ,self.Q_lOut_b)
+			h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.Q_l4_w ,self.Q_l4_b))
+
+			self.qValuePrediction = self._classic_fc( h4_fc, self.Q_lOut_w ,self.Q_lOut_b)
 		
 		if forSess:
-			return qValuePrediction 
+			return self.qValuePrediction
 	
 
 	def T_nn(self, forSess = False):
 
-		h1 = self._activation_fn(self._conv2d(self.nn_input, self.T_l1_w, self.l1_strd, self.T_l1_b))
-		
-		h2 = self._activation_fn(self._conv2d(h1,    self.T_l2_w, self.l2_strd, self.T_l2_b))
-		
-		h3 = self._activation_fn(self._conv2d(h2,    self.T_l3_w, self.l3_strd, self.T_l3_b))
-		
-		flat_h3 = self._flatten_fn(h3)
-		
-		h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.T_l4_w ,self.T_l4_b))
-		
-		nxt_qValuePrediction = self._classic_fc( h4_fc, self.T_lOut_w ,self.T_lOut_b)
+		if not forSess:
+			h1 = self._activation_fn(self._conv2d(self.nn_input, self.T_l1_w, self.l1_strd, self.T_l1_b))
+
+			h2 = self._activation_fn(self._conv2d(h1,    self.T_l2_w, self.l2_strd, self.T_l2_b))
+
+			h3 = self._activation_fn(self._conv2d(h2,    self.T_l3_w, self.l3_strd, self.T_l3_b))
+
+			flat_h3 = self._flatten_fn(h3)
+
+			h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.T_l4_w ,self.T_l4_b))
+
+			self.nxt_qValuePrediction = self._classic_fc( h4_fc, self.T_lOut_w ,self.T_lOut_b)
+
+			self.updateTparas()  # to create tf ops
 		
 		if forSess:
-			return nxt_qValuePrediction
+			return self.nxt_qValuePrediction
+	
+	def updateTparas(self,forSess = False):
 
-	
-	def updateTparas(self,sess):
-	
-		a = self.T_l1_w.assign(self.Q_l1_w)		
-		b = self.T_l1_b.assign(self.Q_l1_b)
-		c = self.T_l2_w.assign(self.Q_l2_w)
-		d = self.T_l2_b.assign(self.Q_l2_b)
-		e = self.T_l3_w.assign(self.Q_l3_w)
-		f = self.T_l3_b.assign(self.Q_l3_b)
-		g = self.T_l4_w.assign(self.Q_l4_w)
-		h = self.T_l4_b.assign(self.Q_l4_b)	
-		i = self.T_lOut_w.assign(self.Q_lOut_w)
-		j = self.T_lOut_b.assign(self.Q_lOut_b)
+		if not forSess:
+			self.a = self.T_l1_w.assign(self.Q_l1_w)
+			self.b = self.T_l1_b.assign(self.Q_l1_b)
+			self.c = self.T_l2_w.assign(self.Q_l2_w)
+			self.d = self.T_l2_b.assign(self.Q_l2_b)
+			self.e = self.T_l3_w.assign(self.Q_l3_w)
+			self.f = self.T_l3_b.assign(self.Q_l3_b)
+			self.g = self.T_l4_w.assign(self.Q_l4_w)
+			self.h = self.T_l4_b.assign(self.Q_l4_b)
+			self.i = self.T_lOut_w.assign(self.Q_lOut_w)
+			self.j = self.T_lOut_b.assign(self.Q_lOut_b)
 		
-		sess.run([a,b,c,d,e,f,g,h,i,j])
-		print("Target net parameters updated! ")
+		if forSess:
+			return [self.a,self.b,self.c,self.d,self.e,self.f,self.g,self.h,self.i,self.j]
