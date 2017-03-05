@@ -5,12 +5,12 @@ class AgentSetting():
 	
 	''''commented values are the used ones in the nature paper, use them if you got that much of computing power'''
 
-	minibatch = 16 #32
+	minibatch = 32
 	
 	replay_strt_size = 1000 #50000 # at start use randm policy for this time to fill memory b4 learning
-	replay_memory = 5000 #1000000
+	replay_memory = 15000 #1000000
 	
-	t_net_update_freq = 200 #10000
+	t_net_update_freq = 10000 #10000
 	
 	discount_factor = 0.99
 	
@@ -32,7 +32,7 @@ class AgentSetting():
 	e_greedy_init = 1.0
 	e_greedy_final = 0.1
 
-	e_final_at = 1000000 #frames over which epsilon is annealed to its final value
+	e_final_at = training_steps // 5 #1000000 #steps over which epsilon is annealed to its final value
 
 	#TODO apply evalution every 1M steps!
 	no_op_max = 30 #max of no-op action
@@ -66,7 +66,7 @@ class StateProcessorSetting():
 		
 class EnvSetting():
 	
-	recEvery = 10 #rec every ?
+	recEvery = 100 #rec every ? episode
 	'''gym:Each action is repeatedly performed for a duration of k frames, where k is uniformly sampled from {2, 3, 4}.'''
 	action_repeat = 1 #4 
 	
