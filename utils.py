@@ -135,9 +135,14 @@ class Utility(object):
 				t_restore = tf.train.import_meta_graph(self.latest_checkpoint +'.meta')
 				t_restore.restore(sess,self.latest_checkpoint)
 				pass # https://www.tensorflow.org/programmers_guide/meta_graph
+				reloadMem = True
 				
 			else:
 				print("No pre-trained model found...Training from scratch :(")
+				reloadMem = False
+
+			return reloadMem
+		
 		else:
 
 			assert self.latest_checkpoint, "No model was saved for playing :("
