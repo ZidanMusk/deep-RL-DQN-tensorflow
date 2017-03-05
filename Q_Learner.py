@@ -129,17 +129,24 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 
 
 	#fill memory
-	def fill_memory(self,sess):
+	def fill_memory(self,sess,reloadM):
 
 		self.env.reset(sess)
-		print ('Initializing my experience memory...')
 		
+		if not reloadM:
+			print ('Initializing my experience memory...')
+		else:
+			print('Restoring my experience memory...')
+
 		state = self.state_process.get_state(sess)
 		done = False
 		for v in tqdm(range(self.replay_strt_size)):
 
-			#select  an action randomly
-			action = self.env.takeRandomAction()
+			if not reloadM:
+				#select  an action randomly
+				action = self.env.takeRandomAction()
+			else:
+				action = self.behaviour_e_policy(state,sess)
 
 			reward , done = self.env.step(action,sess)
 
@@ -184,11 +191,10 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 
 		action = np.random.choice(self.actions, p=action_probs)
 		
+		pass
 		#decay epsilon
-		if self.training:
-			self._epsilonDecay(sess)
-
-	
+		#if self.training:
+		#	self._epsilonDecay(sess)
 		return action
 	
 	
@@ -277,6 +283,10 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 				#run...run...run
 				loss, _ = sess.run([self.loss,self.train_step],feed_dict = curStateFeedDict)
 				print ("loss %.5f at step %d" %(loss, self.global_step.eval()))
+				
+				pass
+				#after each step decay epsilon_greedy:
+				self._epsilonDecay(sess)
 				
 				#stats
 				self.totalLoss += loss
