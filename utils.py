@@ -124,7 +124,7 @@ class Utility(object):
 			self.saver_for_play.save(sess, checkpoint_file, global_step =step)
 
 
-	'''restoring graph vars'''
+	'''restoring graph vars, returns true if restored successfully in training mode'''
 	def restore_graph(self,sess,forTrain = True):
 
 		if (forTrain):

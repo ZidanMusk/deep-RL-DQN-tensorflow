@@ -37,10 +37,11 @@ def main():
 
 		sess.run(init_op)
 
+		pass
 		#tries to restore a previously trained model and resume training
-		dqn.util.restore_graph(sess,forTrain = TRAINING)
+		reloadMemory = dqn.util.restore_graph(sess,forTrain = TRAINING)
 		
-		dqn.fill_memory(sess)
+		dqn.fill_memory(sess, reloadMemory)
 
 		print("Starting training at Episode {} and Step {}...".format(episodeNum.eval(),step.eval()))
 
