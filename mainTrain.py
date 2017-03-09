@@ -10,13 +10,16 @@ from settings import AgentSetting
 ENV_NAME = 'Breakout-v0'
 
 #save model every ? episodes
-SAVE_EVERY = 100
+SAVE_EVERY = 200
 #max update steps to run
 MAX_STEPS = AgentSetting.training_steps
 #use double DQN
 DOUBLE_DQN = True
 #use dueling DQN
 DUELING_DQN = False
+
+#prioritized experience replay PER
+PER = False
 
 #we are training
 TRAINING  = True # training =true , playing= false
@@ -26,11 +29,12 @@ RENDER = True
 
 def main():
 
-	dqn = DQN(ENV_NAME, DOUBLE_DQN, DUELING_DQN, TRAINING, RENDER)
+	dqn = DQN(ENV_NAME, DOUBLE_DQN, DUELING_DQN,PER, TRAINING, RENDER)
 
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 	episodeNum = dqn.training_episodes  # current episode as tensor
-	step = dqn.global_step
+	step = dqn.agentSteps
+	updates = dqn.global_step
 	timer = dqn.training_hrs
 
 	with tf.Session() as sess:
@@ -54,9 +58,9 @@ def main():
 
 				dqn.learning(sess) #returns when an episode is done
 
-				print ('Finished Episode no. %d  in %.3f secs...with ::' % (curEpNum, dqn.duration))
-				print('Ep.Steps %d...total Ep.Reward = %.2f, total Ep.Loss = %.4f' % (step.eval()-cumulatedSteps, dqn.totalReward, dqn.totalLoss))
-				print('Trained for : %d steps and %d episodes in %.3f  hrs' %(step.eval(), curEpNum+1, timer.eval()))
+				print ('Finished Episode no. {} with ep_greedy = {}...'.format (curEpNum, dqn.epsilon.eval()))
+				print('Ep.AgentSteps = %d...Ep.Updates = %d...total Ep.Reward = %.2f' % (step.eval()-cumulatedSteps, dqn.updates, dqn.totalReward))
+				print('Learned with %d updates...%d episodes...in %.3f  hrs' %(updates.eval(), curEpNum+1, timer.eval()))
 
 				curStep.update(step.eval() - cumulatedSteps)
 
@@ -69,7 +73,7 @@ def main():
 				if (step.eval() >= MAX_STEPS):
 
 					dqn.util.save_graph(sess,step.eval(),save2play = True)
-					print('Finished Training for %.0f Frames!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(step.eval()* AgentSetting.update_freq, timer.eval()))
+					print('Finished Training by performing %d Updates and %d Steps!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(dqn.global_step.eval(),step.eval(), timer.eval()))
 
 #RUN...
 main()

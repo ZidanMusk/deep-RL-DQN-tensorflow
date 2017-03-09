@@ -90,7 +90,7 @@ class Brain(object):
 				#OUT
 				self.T_lOut_w = tf.get_variable(name = 'T_wOut', dtype = tf.float32,initializer = self.Q_lOut_w.initialized_value(),trainable = False)
 				self.T_lOut_b = tf.get_variable(name = 'T_bOut', dtype = tf.float32,initializer = self.Q_lOut_b.initialized_value(),trainable = False)
-		
+
 		self._build_net(training)
 
 	#'NWHC' format!
