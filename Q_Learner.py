@@ -11,11 +11,13 @@ from memory import ExperienceMemory
 from StateProcessor import StateProcessor
 from settings import AgentSetting, ArchitectureSetting
 
-#TODO clip loss b/n [-1,1]
 
-class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
+class DQN(object):
 
-	def __init__(self,env_name,doubleQ = False, dueling = False, training = True, watch = False ):
+	def __init__(self,env_name, doubleQ = False, dueling = False, perMemory = False, training = True, watch = False ):
+
+		self.agentSteps = tf.Variable(0, trainable=False,name='agentSteps')
+		self.agentStepsUpdater = self.agentSteps.assign_add(1)
 
 		# keep in order
 		self.util = Utility(env_name, doubleQ, dueling, training)
@@ -26,7 +28,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 
 		self.net_feed = self.deepNet.nn_input
 		self.onlineNet = self.deepNet.Q_nn(forSess=True)
-
+		#self.eee = self.add
 		self.actions = np.arange(self.num_action)
 		self.no_op_max = AgentSetting.no_op_max
 		self.startTime = 0.0
@@ -40,8 +42,8 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		pass
 		print ("POSSIBLE ACTIONS :", self.actions)
 
-		if dueling:
-			raise Exception('Dueling DQN is under construction.')
+		if (dueling or perMemory):
+			raise Exception('Dueling/PER DQN is under construction.')
 
 		if training:
 
@@ -62,17 +64,19 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			self.e_greedy_final = AgentSetting.e_greedy_final
 			self.e_final_at = AgentSetting.e_final_at
 
-			self.e_decay_rate = (self.e_greedy_init - self.e_greedy_final) / self.e_final_at
+			#self.e_decay_rate = (self.e_greedy_init - self.e_greedy_final) / self.e_final_at
 
-			self.epsilon = tf.Variable(self.e_greedy_init, dtype = tf.float32, name = "epsilon")
+			self.epsilon = tf.Variable(0.0, trainable = False, dtype = tf.float32, name = "epsilon")
 			self.epsilonHolder = tf.placeholder(dtype = tf.float32)
 			self.epsilonUpdater = self.epsilon.assign(self.epsilonHolder)
 			
 			self.replay_strt_size = AgentSetting.replay_strt_size
 
 			self.global_step =  tf.Variable(0, trainable=False,name='global_step')
-			self.replay_memory = ExperienceMemory(ArchitectureSetting.in_shape, self.replay_memorySize)
 
+			pass #per?
+			self.replay_memory = ExperienceMemory(ArchitectureSetting.in_shape, self.replay_memorySize)
+			pass
 
 			self.training_hrs = tf.Variable(0.0, trainable=False,name='training_hrs')
 			self.training_episodes = tf.Variable(0,trainable = False , name = "training_episodes")
@@ -112,7 +116,16 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			self.curState_qValueSelected = tf.reduce_sum(tf.multiply(self.onlineNet, self.chosenAction),
 														 axis=1)  # elementwise
 
-			self.loss = tf.reduce_mean(tf.squared_difference(self.td_targetHolder, self.curState_qValueSelected))
+			pass #clip
+			self.delta = tf.subtract(self.td_targetHolder, self.curState_qValueSelected)
+			self.clipped_loss = tf.where(tf.abs(self.delta) < 1.0,
+										  0.5 * tf.square(self.delta),
+										  tf.abs(self.delta) - 0.5, name='clipped_loss')
+
+			self.loss = tf.reduce_mean(self.clipped_loss, name='loss')
+
+			#$self.loss = tf.reduce_mean(tf.squared_difference(self.td_targetHolder, self.curState_qValueSelected))
+			pass
 			self.optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=0.9, momentum=self.momentum,
 													   epsilon=1e-10)
 			self.train_step = self.optimizer.minimize(self.loss, global_step=self.global_step)
@@ -136,7 +149,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		if not reloadM:
 			print ('Initializing my experience memory...')
 		else:
-			print('Restoring my experience memory...')
+			print('Restoring my experience memory (naive solution!)...')
 
 		state = self.state_process.get_state(sess)
 		done = False
@@ -170,13 +183,12 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 
 	def _epsilonDecay(self,sess):
 
-		if(self.epsilon.eval() > self.e_greedy_final):
-			eps = self.epsilon.eval() - self.e_decay_rate
-			sess.run(self.epsilonUpdater, feed_dict = {self.epsilonHolder : eps})
-			
-		else:	
-			print ("epsilon reached its final value @ {} ".format(self.epsilon.eval()))
-	
+		pass
+		eps = self.e_greedy_final + max(0,(self.e_greedy_init - self.e_greedy_final) * (self.e_final_at - self.agentSteps.eval()) / self.e_final_at)
+
+		sess.run(self.epsilonUpdater, feed_dict={self.epsilonHolder: eps})
+
+
 	#Return the chosen action!
 	def behaviour_e_policy(self,state,sess):
 
@@ -195,6 +207,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		#decay epsilon
 		#if self.training:
 		#	self._epsilonDecay(sess)
+
 		return action
 	
 	
@@ -246,10 +259,16 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		state = self.state_process.get_state(sess)
 
 		no_op = 0
-		for t in itertools.count():
-			
+		for _ in itertools.count():
+
+			#take action
 			action = self.behaviour_e_policy(state,sess)
+			#step and observe
 			reward , done = self.env.step(action,sess)
+			#inc agent steps
+			sess.run(self.agentStepsUpdater)
+			#decay epsilon after every step
+			self._epsilonDecay(sess)
 
 			pass
 			if(action == 0):
@@ -267,7 +286,7 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 			experience = (state , action , reward, done , nxt_state)
 			self.replay_memory.add(experience)
 
-			if((t+1) % self.update_freq == 0):
+			if( self.agentSteps.eval() % self.update_freq == 0):
 				
 				#sample  a minibatch
 				state_batch, action_batch, reward_batch, done_batch, nxt_state_batch = self.replay_memory.sample(self.minibatch)
@@ -282,21 +301,19 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 				curStateFeedDict = {self.net_feed: state_batch, self.actionBatchHolder : action_batch, self.td_targetHolder : td_target }
 				#run...run...run
 				loss, _ = sess.run([self.loss,self.train_step],feed_dict = curStateFeedDict)
-				print ("loss %.5f at step %d" %(loss, self.global_step.eval()))
-				
-				pass
-				#after each step decay epsilon_greedy:
-				self._epsilonDecay(sess)
-				
+				#print ("loss %.5f at step %d" %(loss, self.global_step.eval()))
+
+
 				#stats
 				self.totalLoss += loss
 				self.countL +=1
 				self.updates +=1 #num of updates made per episode 
-				
-				if (self.global_step.eval() % self.t_net_update_freq == 0 ):
 
-					sess.run(self.deepNet.updateTparas(True))
-					print("Target net parameters updated!")
+			pass #TRY self.global_step.eval()
+			if ( self.agentSteps.eval() % self.t_net_update_freq == 1 ):
+
+				sess.run(self.deepNet.updateTparas(True))
+				print("Target net parameters updated!")
 			pass
 			if done:
 				
@@ -324,4 +341,4 @@ class DQN( Brain, StateProcessor, Environment, ExperienceMemory):
 		if self.training:
 			listy.update({"totLoss" : self.totalLoss , "avgLoss" : (self.totalLoss/self.countL), 'epUpdates' : self.updates })
 
-		self.util.summary_board(sess,self.global_step.eval(), listy, self.training)
+		self.util.summary_board(sess,self.agentSteps.eval(), listy, self.training)
