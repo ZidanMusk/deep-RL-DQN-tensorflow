@@ -69,14 +69,15 @@ class Environment(object):
 	# reward clipping
 	def _clip_reward(self):
 
-		if self.reward > 0 :
+		if self.reward > self.max_reward :
 			self.reward =  self.max_reward
 		
-		elif self.reward < 0 :
+		elif self.reward < self.min_reward :
 			self.reward = self.min_reward
 		
 		else:
-			self.reward = 0.0
+			pass
+			#self.reward = 0.0
 
 	pass #Deprecated
 	def _skipping_steps(self,action,sess):

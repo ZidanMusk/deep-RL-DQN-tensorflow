@@ -32,7 +32,7 @@ class AgentSetting():
 	e_greedy_init = 1.0
 	e_greedy_final = 0.1
 
-	e_final_at = training_steps // 5 #1000000 #steps over which epsilon is annealed to its final value
+	e_final_at = training_steps // 50 #1000000 #steps over which epsilon is annealed to its final value
 
 	#TODO apply evalution every 1M steps!
 	no_op_max = 30 #max of no-op action
