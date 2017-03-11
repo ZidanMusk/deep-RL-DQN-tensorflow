@@ -5,8 +5,9 @@ from settings import ArchitectureSetting, AgentSetting
 
 class Brain(object):
 	
-	def __init__(self, num_action,training = True):
+	def __init__(self, num_action, dueling = False, training = True):
 
+		self.dueling = dueling
 		#params initializers
 		self.w_inii = tf.contrib.layers.xavier_initializer(uniform=True, seed=None, dtype=tf.float32)
 	
@@ -55,6 +56,10 @@ class Brain(object):
 		
 		self.shOut = [self.l4_nodes, self.out_actions]
 
+		#duel stuff
+		self.shOutValueScalar = 1 #scalar output
+		self.shOutDuelValue = [self.l4_nodes,self.shOutValueScalar]
+
 		self.nn_input = tf.placeholder(tf.float32, shape=[ None,self.net_input[0],self.net_input[1],self.net_input[2] ])
 
 		self.batch_size = AgentSetting.minibatch
@@ -67,14 +72,43 @@ class Brain(object):
 			self.Q_l2_b = tf.get_variable(name = 'Q_b2', shape = self.l2_filters, dtype = tf.float32,initializer = self.b_inii,trainable = True)
 			self.Q_l3_w = tf.get_variable(name = 'Q_w3', shape = self.shp3, dtype = tf.float32,initializer = self.w_inii,trainable = True)
 			self.Q_l3_b = tf.get_variable(name = 'Q_b3', shape = self.l3_filters, dtype = tf.float32,initializer = self.b_inii,trainable = True)
-			#FC
-			self.Q_l4_w = tf.get_variable(name = 'Q_w4', shape = self.shp4, dtype = tf.float32,initializer = self.w_inii,trainable = True)
-			self.Q_l4_b = tf.get_variable(name = 'Q_b4', shape = self.l4_nodes, dtype = tf.float32,initializer = self.b_inii,trainable = True)
-			#OUT
-			self.Q_lOut_w = tf.get_variable(name = 'Q_wOut', shape = self.shOut, dtype = tf.float32,initializer = self.w_inii,trainable = True)
-			self.Q_lOut_b = tf.get_variable(name = 'Q_bOut', shape = self.out_actions, dtype = tf.float32,initializer = self.b_inii,trainable = True)
 
-			'''Initialize T-net weights with those of q-net'''
+			pass #single FC or dueling
+			if dueling:
+				#value paras beta
+				self.Q_l4_wValue = tf.get_variable(name='Q_w4_Value', shape=self.shp4, dtype=tf.float32, initializer=self.w_inii,
+											  trainable=True)
+				self.Q_l4_bValue = tf.get_variable(name='Q_b4_Value', shape=self.l4_nodes, dtype=tf.float32,
+											  initializer=self.b_inii, trainable=True)
+				#advantage paras alpha
+				self.Q_l4_wAdv = tf.get_variable(name='Q_w4_Adv', shape=self.shp4, dtype=tf.float32, initializer=self.w_inii,
+											  trainable=True)
+				self.Q_l4_bAdv = tf.get_variable(name='Q_b4_Adv', shape=self.l4_nodes, dtype=tf.float32,
+											  initializer=self.b_inii, trainable=True)
+
+				# OUT -> value is scalar
+				self.Q_lOut_wValue = tf.get_variable(name='Q_wOut_Value', shape=self.shOutDuelValue, dtype=tf.float32,
+												initializer=self.w_inii, trainable=True)
+				self.Q_lOut_bValue = tf.get_variable(name='Q_bOut_Value', shape=self.shOutValueScalar, dtype=tf.float32,
+												initializer=self.b_inii, trainable=True)
+
+				# OUT -> advantage action dims
+				self.Q_lOut_wAdv = tf.get_variable(name='Q_wOut_Adv', shape=self.shOut, dtype=tf.float32,
+												initializer=self.w_inii, trainable=True)
+				self.Q_lOut_bAdv = tf.get_variable(name='Q_bOut_Adv', shape=self.out_actions, dtype=tf.float32,
+												initializer=self.b_inii, trainable=True)
+
+				pass
+
+			else:
+				self.Q_l4_w = tf.get_variable(name = 'Q_w4', shape = self.shp4, dtype = tf.float32,initializer = self.w_inii,trainable = True)
+				self.Q_l4_b = tf.get_variable(name = 'Q_b4', shape = self.l4_nodes, dtype = tf.float32,initializer = self.b_inii,trainable = True)
+
+				#OUT
+				self.Q_lOut_w = tf.get_variable(name = 'Q_wOut', shape = self.shOut, dtype = tf.float32,initializer = self.w_inii,trainable = True)
+				self.Q_lOut_b = tf.get_variable(name = 'Q_bOut', shape = self.out_actions, dtype = tf.float32,initializer = self.b_inii,trainable = True)
+
+		'''Initialize T-net weights with those of q-net'''
 		if(training):
 			with tf.variable_scope("T_net_paras"):
 				
@@ -84,12 +118,44 @@ class Brain(object):
 				self.T_l2_b = tf.get_variable(name = 'T_b2', dtype = tf.float32,initializer = self.Q_l2_b.initialized_value(),trainable = False)
 				self.T_l3_w = tf.get_variable(name = 'T_w3', dtype = tf.float32,initializer = self.Q_l3_w.initialized_value(),trainable = False)
 				self.T_l3_b = tf.get_variable(name = 'T_b3', dtype = tf.float32,initializer = self.Q_l3_b.initialized_value(),trainable = False)
-				#FC
-				self.T_l4_w = tf.get_variable(name = 'T_w4', dtype = tf.float32,initializer = self.Q_l4_w.initialized_value(),trainable = False)
-				self.T_l4_b = tf.get_variable(name = 'T_b4', dtype = tf.float32,initializer = self.Q_l4_b.initialized_value(),trainable = False)
-				#OUT
-				self.T_lOut_w = tf.get_variable(name = 'T_wOut', dtype = tf.float32,initializer = self.Q_lOut_w.initialized_value(),trainable = False)
-				self.T_lOut_b = tf.get_variable(name = 'T_bOut', dtype = tf.float32,initializer = self.Q_lOut_b.initialized_value(),trainable = False)
+
+				pass  # single FC or dueling
+				if dueling:
+					# value paras beta
+					self.T_l4_wValue = tf.get_variable(name='T_w4_Value', dtype=tf.float32,
+												  initializer=self.Q_l4_wValue.initialized_value(), trainable=False)
+					self.T_l4_bValue = tf.get_variable(name='T_b4_Value', dtype=tf.float32,
+												  initializer=self.Q_l4_bValue.initialized_value(), trainable=False)
+					# advantage paras alpha
+					self.T_l4_wAdv = tf.get_variable(name='T_w4_Adv', dtype=tf.float32,
+												  initializer=self.Q_l4_wAdv.initialized_value(), trainable=False)
+					self.T_l4_bAdv = tf.get_variable(name='T_b4_Adv', dtype=tf.float32,
+												  initializer=self.Q_l4_bAdv.initialized_value(), trainable=False)
+
+					# OUT -> value is scalar
+					self.T_lOut_wValue = tf.get_variable(name='T_wOut_Value', dtype=tf.float32,
+													initializer=self.Q_lOut_wValue.initialized_value(), trainable=False)
+					self.T_lOut_bValue = tf.get_variable(name='T_bOut_Value', dtype=tf.float32,
+													initializer=self.Q_lOut_bValue.initialized_value(), trainable=False)
+					# OUT -> advantage action dims
+					self.T_lOut_wAdv = tf.get_variable(name='T_wOut_Adv', dtype=tf.float32,
+													initializer=self.Q_lOut_wAdv.initialized_value(), trainable=False)
+					self.T_lOut_bAdv = tf.get_variable(name='T_bOut_Adv', dtype=tf.float32,
+													initializer=self.Q_lOut_bAdv.initialized_value(), trainable=False)
+
+					pass
+
+				else:
+
+					self.T_l4_w = tf.get_variable(name = 'T_w4', dtype = tf.float32,initializer = self.Q_l4_w.initialized_value(),trainable = False)
+					self.T_l4_b = tf.get_variable(name = 'T_b4', dtype = tf.float32,initializer = self.Q_l4_b.initialized_value(),trainable = False)
+
+					# OUT
+					self.T_lOut_w = tf.get_variable(name='T_wOut', dtype=tf.float32,initializer=self.Q_lOut_w.initialized_value(), trainable=False)
+					self.T_lOut_b = tf.get_variable(name='T_bOut', dtype=tf.float32,initializer=self.Q_lOut_b.initialized_value(), trainable=False)
+
+				pass
+
 
 		self._build_net(training)
 
@@ -108,9 +174,16 @@ class Brain(object):
 	def _classic_fc(self,inn ,weights, bias):
 
 		return tf.nn.bias_add(tf.matmul(inn, weights),bias)
-		
-	def _dueling_fc():
-		pass #TODO
+
+	'''The advantage of the dueling architecture lies partly in its ability to learn the state-value function efficiently.'''
+	def _dueling_archOutput(self,value,advantage):
+		# Q = value + (adv - avg.Adv)
+		pass
+		advAvg = tf.expand_dims( tf.reduce_mean(advantage,axis = 1), axis=1)
+		advIdentifiable = tf.subtract(advantage, advAvg)
+		Qvalue = tf.add(value, advIdentifiable)
+		return Qvalue
+
 	
 	def _activation_fn(self, da):
 
@@ -134,10 +207,24 @@ class Brain(object):
 
 			flat_h3 = self._flatten_fn(h3)
 
-			h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.Q_l4_w ,self.Q_l4_b))
+			pass
+			if self.dueling:
 
-			self.qValuePrediction = self._classic_fc( h4_fc, self.Q_lOut_w ,self.Q_lOut_b)
-		
+				h4_duelValueIn = self._activation_fn(self._classic_fc(flat_h3, self.Q_l4_wValue, self.Q_l4_bValue))
+				h4_duelAdvIn = self._activation_fn(self._classic_fc(flat_h3, self.Q_l4_wAdv, self.Q_l4_bAdv))
+
+				h4_duelValueOut = self._activation_fn(self._classic_fc(h4_duelValueIn, self.Q_lOut_wValue, self.Q_lOut_bValue))
+				h4_duelAdvOut = self._activation_fn(self._classic_fc(h4_duelAdvIn, self.Q_lOut_wAdv, self.Q_lOut_bAdv))
+
+				self.qValuePrediction = self._dueling_archOutput(h4_duelValueOut,h4_duelAdvOut)
+				pass
+			else:
+				h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.Q_l4_w ,self.Q_l4_b))
+				self.qValuePrediction = self._classic_fc(h4_fc, self.Q_lOut_w, self.Q_lOut_b)
+
+			pass
+
+
 		if forSess:
 			return self.qValuePrediction
 	
@@ -153,28 +240,64 @@ class Brain(object):
 
 			flat_h3 = self._flatten_fn(h3)
 
-			h4_fc  = self._activation_fn(self._classic_fc(flat_h3, self.T_l4_w ,self.T_l4_b))
+			pass
+			if self.dueling:
 
-			self.nxt_qValuePrediction = self._classic_fc( h4_fc, self.T_lOut_w ,self.T_lOut_b)
+				h4_duelValueIn = self._activation_fn(self._classic_fc(flat_h3, self.T_l4_wValue, self.T_l4_bValue))
+				h4_duelAdvIn = self._activation_fn(self._classic_fc(flat_h3, self.T_l4_wAdv, self.T_l4_bAdv))
 
+				h4_duelValueOut = self._activation_fn(self._classic_fc(h4_duelValueIn, self.T_lOut_wValue, self.T_lOut_bValue))
+				h4_duelAdvOut = self._activation_fn(self._classic_fc(h4_duelAdvIn, self.T_lOut_wAdv, self.T_lOut_bAdv))
+
+				self.nxt_qValuePrediction = self._dueling_archOutput(h4_duelValueOut, h4_duelAdvOut)
+				pass
+			else:
+				h4_fc = self._activation_fn(self._classic_fc(flat_h3, self.T_l4_w, self.T_l4_b))
+				self.nxt_qValuePrediction = self._classic_fc( h4_fc, self.T_lOut_w ,self.T_lOut_b)
+			pass
 			self.updateTparas()  # to create tf ops
-		
+
 		if forSess:
 			return self.nxt_qValuePrediction
 	
 	def updateTparas(self,forSess = False):
 
 		if not forSess:
+
 			self.a = self.T_l1_w.assign(self.Q_l1_w)
 			self.b = self.T_l1_b.assign(self.Q_l1_b)
 			self.c = self.T_l2_w.assign(self.Q_l2_w)
 			self.d = self.T_l2_b.assign(self.Q_l2_b)
 			self.e = self.T_l3_w.assign(self.Q_l3_w)
 			self.f = self.T_l3_b.assign(self.Q_l3_b)
-			self.g = self.T_l4_w.assign(self.Q_l4_w)
-			self.h = self.T_l4_b.assign(self.Q_l4_b)
-			self.i = self.T_lOut_w.assign(self.Q_lOut_w)
-			self.j = self.T_lOut_b.assign(self.Q_lOut_b)
-		
+			pass
+			if self.dueling:
+
+				self.dgV = self.T_l4_wValue.assign(self.Q_l4_wValue)
+				self.dhV = self.T_l4_bValue.assign(self.Q_l4_bValue)
+
+				self.dgA = self.T_l4_wAdv.assign(self.Q_l4_wAdv)
+				self.dhA = self.T_l4_bAdv.assign(self.Q_l4_bAdv)
+
+				self.diV = self.T_lOut_wValue.assign(self.Q_lOut_wValue)
+				self.djV = self.T_lOut_bValue.assign(self.Q_lOut_bValue)
+
+				self.diA = self.T_lOut_wAdv.assign(self.Q_lOut_wAdv)
+				self.djA = self.T_lOut_bAdv.assign(self.Q_lOut_bAdv)
+
+				pass
+
+			else:
+				self.g = self.T_l4_w.assign(self.Q_l4_w)
+				self.h = self.T_l4_b.assign(self.Q_l4_b)
+				self.i = self.T_lOut_w.assign(self.Q_lOut_w)
+				self.j = self.T_lOut_b.assign(self.Q_lOut_b)
+			pass
+
 		if forSess:
-			return [self.a,self.b,self.c,self.d,self.e,self.f,self.g,self.h,self.i,self.j]
+
+			if self.dueling:
+				return [self.a,self.b,self.c,self.d,self.e,self.f,self.dgV,self.dhV,self.diV,self.djV,self.dgA,self.dhA,self.diA,self.djA]
+				pass
+			else:
+				return [self.a,self.b,self.c,self.d,self.e,self.f,self.g,self.h,self.i,self.j]
