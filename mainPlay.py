@@ -14,7 +14,7 @@ MAX_EPISODES = 10
 #use double DQN
 DOUBLE_DQN = True
 #use dueling DQN
-DUELING_DQN = False
+DUELING_DQN = True
 #prioritized experience replay PER
 PER = True
 
@@ -46,4 +46,7 @@ def main():
 
 
 #RUN...
+if __name__ == "__main__":
+	main()
+
 main()

@@ -16,7 +16,7 @@ MAX_STEPS = AgentSetting.training_steps
 #use double DQN
 DOUBLE_DQN = True
 #use dueling DQN
-DUELING_DQN = False
+DUELING_DQN = True
 #prioritized experience replay PER
 PER = True
 
@@ -75,4 +75,5 @@ def main():
 					print('Finished Training by performing %d Updates and %d Steps!...took me %.3f hrs...Now run mainPlay.py and watch me play :)'%(dqn.global_step.eval(),step.eval(), timer.eval()))
 
 #RUN...
-main()
+if __name__ == "__main__":
+	main()
