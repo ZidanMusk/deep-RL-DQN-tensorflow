@@ -18,10 +18,10 @@ class AgentSetting():
 	
 	#nature paper:50 million frames to be trained on 
 	#double DQN paper: 200 million frames,ie, 50M steps 
-	training_steps = 50000000 
+	training_steps = 50000000
 	
 	#RMSProp 
-	learning_rate = 0.00025
+	learning_rate = 0.00025 #not dueling
 	momentum = 0.95
 	#deprecated
 	#grad_momentum = 0.95
@@ -85,6 +85,19 @@ class UtilSettings():
 	trainDir = 'graphVars/train' #dir for checkpoints during training
 	playDir = 'graphVars/play' #dir for model weights for playing/eval
 	monitorDir = 'gymRecordings'
-	experienceDir = 'expMemory' #TODO-kill
+	#experienceDir = 'expMemory' #TODO-kill
 	trainSummaryDir = 'summaries/train'
 	playSummaryDir = 'summaries/play'
+
+class PerSettings():
+	# doubleQ (tuned) , per-> proportional method
+	#priority paras
+	epsilon = 1.0#0.1 #0.01
+	alpha = 0.6
+
+	#importance sampling paras
+	beta_init = 0.4
+	beta_final = 1.0 #linear annealing till end of training
+	beta_finalAt = AgentSetting.training_steps
+
+	step_size = AgentSetting.learning_rate / 4.0
