@@ -13,35 +13,40 @@ if "../" not in sys.path:
 class Utility(object):
 
 
-	def __init__(self,env_name,doubleQ = False, dueling = False,training = True):
+	def __init__(self,env_name,doubleQ = False, dueling = False, perMem = False, training = True):
 
 		#create dirs
 		self.trainDir = UtilSettings.trainDir
 		self.playDir = UtilSettings.playDir
 		self.monitorDir = UtilSettings.monitorDir
-		self.experienceDir = UtilSettings.experienceDir
+		#self.experienceDir = UtilSettings.experienceDir
 
 		self.folder = env_name + '/'
 
 		self.trainSummaryDir = UtilSettings.trainSummaryDir
 		self.playSummaryDir = UtilSettings.playSummaryDir
 
-		pass #TODO -kill
-		self.experienceDir = os.path.join(self.folder,self.experienceDir)
-		if not os.path.exists(self.experienceDir):
-			os.makedirs(self.experienceDir)
+		#pass #TODO -kill
+		#self.experienceDir = os.path.join(self.folder,self.experienceDir)
+		#if not os.path.exists(self.experienceDir):
+		#	os.makedirs(self.experienceDir)
+
+		if(perMem):
+			self.folder += 'withPrioritizedReplay'
+		else:
+			self.folder += 'withRandomReplay'
 
 		if(not doubleQ and not dueling): #basic DQN
 			self.folder +=  'DQN'
 
 		elif(doubleQ and not dueling): #doubleDQN
-			self.folder += 'doubleDQN'
+			self.folder += 'DoubleDQN'
 
 		elif(not doubleQ and dueling): #duelingDQN
-			self.folder += 'duelDQN'
+			self.folder += 'DuelDQN'
 
 		else:#duelDoubleDQN (ddDqn)
-			self.folder += 'ddDQN'
+			self.folder += 'DoDlDQN'
 
 		if training:
 			self.monitorDir += '/trainingVids'
