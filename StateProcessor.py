@@ -32,4 +32,3 @@ class StateProcessor(object):
 	def get_state(self, sess):
 
 		return sess.run(self.updateState)
-		
