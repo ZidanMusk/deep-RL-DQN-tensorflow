@@ -22,6 +22,8 @@ class AgentSetting():
 	
 	#RMSProp 
 	learning_rate = 0.00025 #not dueling
+	duel_learining_rate = 0.0000625  # dueling lr (6.25*10^-5)
+
 	momentum = 0.95
 	#deprecated
 	#grad_momentum = 0.95
@@ -55,7 +57,7 @@ class ArchitectureSetting():
 	f3_size = [3,3]
 	stride3 = 1
 	#layer4 fc
-	nodes = 512
+	nodes = 512  #if dueling 512 for value and same for adv
 
 
 
