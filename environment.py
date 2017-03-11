@@ -57,7 +57,7 @@ class Environment(object):
 		sess.run(self.prev_frameAssigner, feed_dict = {self.prev_frameHolder : self.cur_frame.eval()})
 		sess.run(self.cur_frameAssigner, feed_dict={self.cur_frameHolder: self.observation})
 
-		
+
 		#clip all +ve rewards to +1 and all -ve to -1
 		self._clip_reward()
 
@@ -65,6 +65,7 @@ class Environment(object):
 		#self._skipping_steps(action,sess)
 
 		return self.reward, self.done
+
 
 	# reward clipping
 	def _clip_reward(self):
