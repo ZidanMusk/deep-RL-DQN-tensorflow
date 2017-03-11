@@ -42,4 +42,20 @@ class ExperienceMemory(object):
             assert self.indexer >= size, "batch size can't be larger than currently filled memory!"
             indexes = random.sample(range(self.indexer), size)
 
+        return self.getSamples(indexes)
+        #return self.stateMem[indexes], self.actionMem[indexes], self.rewardMem[indexes], self.doneMem[indexes], self.nxt_stateMem[indexes]
+
+    def getSamples(self,indexes):
+
         return self.stateMem[indexes], self.actionMem[indexes], self.rewardMem[indexes], self.doneMem[indexes], self.nxt_stateMem[indexes]
+
+    def update(self,deltas):
+        raise ("Not implemented!")
+
+    def getISW(self):
+        raise("Not implemented!")
+
+    def betaAnneal(self,s):
+        raise("Not implemented!")
+
+
