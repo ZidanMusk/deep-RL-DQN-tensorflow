@@ -17,9 +17,8 @@ MAX_STEPS = AgentSetting.training_steps
 DOUBLE_DQN = True
 #use dueling DQN
 DUELING_DQN = False
-
 #prioritized experience replay PER
-PER = False
+PER = True
 
 #we are training
 TRAINING  = True # training =true , playing= false

@@ -15,6 +15,8 @@ MAX_EPISODES = 10
 DOUBLE_DQN = True
 #use dueling DQN
 DUELING_DQN = False
+#prioritized experience replay PER
+PER = True
 
 #we are PLAYING
 TRAINING  = False # training =true , playing= false
@@ -24,7 +26,7 @@ RENDER = True
 
 def main():
 
-	dqn = DQN(ENV_NAME, DOUBLE_DQN, DUELING_DQN, TRAINING,RENDER)
+	dqn = DQN(ENV_NAME, DOUBLE_DQN, DUELING_DQN, PER, TRAINING, RENDER)
 
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 
