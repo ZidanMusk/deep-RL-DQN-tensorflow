@@ -27,7 +27,7 @@ class DQN(object):
 		self.env = Environment(env_name, self.util.monitorDir)
 		self.state_process = StateProcessor()
 		self.num_action = self.env.VALID_ACTIONS
-		self.deepNet = Brain(self.num_action, training)
+		self.deepNet = Brain(self.num_action, dueling, training)
 
 		self.net_feed = self.deepNet.nn_input
 		self.onlineNet = self.deepNet.Q_nn(forSess=True)
@@ -46,9 +46,6 @@ class DQN(object):
 		self.rendering = watch
 		pass
 		print ("POSSIBLE ACTIONS :", self.actions)
-
-		if (dueling):
-			raise Exception('Dueling DQN is under construction.')
 
 		if training:
 
@@ -116,23 +113,26 @@ class DQN(object):
 			self.curState_qValueSelected = tf.reduce_sum(tf.multiply(self.onlineNet, self.chosenAction),
 														 axis=1)  # elementwise
 
-
 			pass
 			self.delta = tf.subtract(self.td_targetHolder, self.curState_qValueSelected)
+
+			#set learning rate
+			self._setLearningRate()
+			pass
+			#TODO Dueling (rescale and clipping of gradients)
+			pass
 
 			if perMemory:
 
 				self.replay_memory = PEM(ArchitectureSetting.in_shape, self.replay_memorySize)
-				self.learning_rate = PerSettings.step_size
 				self.weightedISHolder = tf.placeholder(shape=[self.minibatch], name='weighted-IS', dtype=tf.float32)
 				self.weightedDelta = tf.multiply(self.delta, self.weightedISHolder)
 				self.clipped_loss = tf.where(tf.abs(self.weightedDelta) < 1.0,
 											 0.5 * tf.square(self.weightedDelta),
 											 tf.abs(self.weightedDelta) - 0.5, name='clipped_loss')
-			else:
+			else: #not dueling or per
 
 				self.replay_memory = ExperienceMemory(ArchitectureSetting.in_shape, self.replay_memorySize)
-				self.learning_rate = AgentSetting.learning_rate
 				self.clipped_loss = tf.where(tf.abs(self.delta) < 1.0,
 										 0.5 * tf.square(self.delta),
 										 tf.abs(self.delta) - 0.5, name='clipped_loss')
@@ -156,6 +156,18 @@ class DQN(object):
 		#finallizee
 		self.util.summANDsave(self.training)
 
+
+	'''sets the agent learning rate '''
+	def _setLearningRate(self):
+
+		if self.dueling:  # regardless of anything else
+			self.learning_rate = AgentSetting.duel_learining_rate
+
+		elif self.perMemory and not self.dueling:
+			self.learning_rate = PerSettings.step_size
+
+		else:
+			self.learning_rate = AgentSetting.learning_rate
 
 	#fill memory
 	def fill_memory(self,sess,reloadM):
