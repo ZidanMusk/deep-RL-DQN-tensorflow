@@ -9,18 +9,21 @@ from AgentBrain import Brain
 from environment import Environment
 from memory import ExperienceMemory
 from StateProcessor import StateProcessor
-from settings import AgentSetting, ArchitectureSetting
+from prioritizedExperienceMemory import PEM
+from settings import AgentSetting, ArchitectureSetting, PerSettings
 
 
 class DQN(object):
 
 	def __init__(self,env_name, doubleQ = False, dueling = False, perMemory = False, training = True, watch = False ):
 
-		self.agentSteps = tf.Variable(0, trainable=False,name='agentSteps')
-		self.agentStepsUpdater = self.agentSteps.assign_add(1)
+		pass
+		with tf.variable_scope('AgentEnvSteps'):
+			self.agentSteps = tf.get_variable(name='agentSteps',initializer= 0, trainable=False,dtype= tf.int32)
+			self.agentStepsUpdater = self.agentSteps.assign_add(1)
 
 		# keep in order
-		self.util = Utility(env_name, doubleQ, dueling, training)
+		self.util = Utility(env_name, doubleQ, dueling, perMemory, training)
 		self.env = Environment(env_name, self.util.monitorDir)
 		self.state_process = StateProcessor()
 		self.num_action = self.env.VALID_ACTIONS
@@ -38,12 +41,14 @@ class DQN(object):
 		self.countR = 0
 		self.training = training
 		self.doubleQ = doubleQ
+		self.dueling = dueling
+		self.perMemory = perMemory
 		self.rendering = watch
 		pass
 		print ("POSSIBLE ACTIONS :", self.actions)
 
-		if (dueling or perMemory):
-			raise Exception('Dueling/PER DQN is under construction.')
+		if (dueling):
+			raise Exception('Dueling DQN is under construction.')
 
 		if training:
 
@@ -56,8 +61,7 @@ class DQN(object):
 			self.t_net_update_freq = AgentSetting.t_net_update_freq
 			self.discount_factor = AgentSetting.discount_factor
 			self.update_freq = AgentSetting.update_freq
-			
-			self.learning_rate = AgentSetting.learning_rate
+
 			self.momentum = AgentSetting.momentum
 
 			self.e_greedy_init = AgentSetting.e_greedy_init
@@ -73,10 +77,6 @@ class DQN(object):
 			self.replay_strt_size = AgentSetting.replay_strt_size
 
 			self.global_step =  tf.Variable(0, trainable=False,name='global_step')
-
-			pass #per?
-			self.replay_memory = ExperienceMemory(ArchitectureSetting.in_shape, self.replay_memorySize)
-			pass
 
 			self.training_hrs = tf.Variable(0.0, trainable=False,name='training_hrs')
 			self.training_episodes = tf.Variable(0,trainable = False , name = "training_episodes")
@@ -116,11 +116,27 @@ class DQN(object):
 			self.curState_qValueSelected = tf.reduce_sum(tf.multiply(self.onlineNet, self.chosenAction),
 														 axis=1)  # elementwise
 
-			pass #clip
+
+			pass
 			self.delta = tf.subtract(self.td_targetHolder, self.curState_qValueSelected)
-			self.clipped_loss = tf.where(tf.abs(self.delta) < 1.0,
-										  0.5 * tf.square(self.delta),
-										  tf.abs(self.delta) - 0.5, name='clipped_loss')
+
+			if perMemory:
+
+				self.replay_memory = PEM(ArchitectureSetting.in_shape, self.replay_memorySize)
+				self.learning_rate = PerSettings.step_size
+				self.weightedISHolder = tf.placeholder(shape=[self.minibatch], name='weighted-IS', dtype=tf.float32)
+				self.weightedDelta = tf.multiply(self.delta, self.weightedISHolder)
+				self.clipped_loss = tf.where(tf.abs(self.weightedDelta) < 1.0,
+											 0.5 * tf.square(self.weightedDelta),
+											 tf.abs(self.weightedDelta) - 0.5, name='clipped_loss')
+			else:
+
+				self.replay_memory = ExperienceMemory(ArchitectureSetting.in_shape, self.replay_memorySize)
+				self.learning_rate = AgentSetting.learning_rate
+				self.clipped_loss = tf.where(tf.abs(self.delta) < 1.0,
+										 0.5 * tf.square(self.delta),
+										 tf.abs(self.delta) - 0.5, name='clipped_loss')
+			pass
 
 			self.loss = tf.reduce_mean(self.clipped_loss, name='loss')
 
@@ -282,12 +298,12 @@ class DQN(object):
 			self.countR += 1
 
 			nxt_state = self.state_process.get_state(sess)
-			
+
 			experience = (state , action , reward, done , nxt_state)
 			self.replay_memory.add(experience)
 
 			if( self.agentSteps.eval() % self.update_freq == 0):
-				
+
 				#sample  a minibatch
 				state_batch, action_batch, reward_batch, done_batch, nxt_state_batch = self.replay_memory.sample(self.minibatch)
 
@@ -299,10 +315,20 @@ class DQN(object):
 				td_target = reward_batch + np.invert(done_batch).astype(np.float32) * self.discount_factor * nxtQVal
 
 				curStateFeedDict = {self.net_feed: state_batch, self.actionBatchHolder : action_batch, self.td_targetHolder : td_target }
+
+				if self.perMemory:
+
+					# update priorities with new td_errors(deltas)
+					self.replay_memory.update(sess.run(self.delta, feed_dict =curStateFeedDict ))
+					#add to feedDict ISW
+					curStateFeedDict.update({self.weightedISHolder : self.replay_memory.getISW()})
+					# anneal beta
+					self.replay_memory.betaAnneal(sess)
+
+				pass
 				#run...run...run
 				loss, _ = sess.run([self.loss,self.train_step],feed_dict = curStateFeedDict)
 				#print ("loss %.5f at step %d" %(loss, self.global_step.eval()))
-
 
 				#stats
 				self.totalLoss += loss
@@ -310,7 +336,7 @@ class DQN(object):
 				self.updates +=1 #num of updates made per episode 
 
 			pass #TRY self.global_step.eval()
-			if ( self.agentSteps.eval() % self.t_net_update_freq == 1 ):
+			if ( self.agentSteps.eval() % self.t_net_update_freq == 0 ):
 
 				sess.run(self.deepNet.updateTparas(True))
 				print("Target net parameters updated!")
