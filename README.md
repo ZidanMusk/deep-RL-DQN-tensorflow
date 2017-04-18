@@ -5,3 +5,5 @@
 [2] [Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461)   
 [3] [Prioritized Experience Replay](https://arxiv.org/abs/1511.05952)  
 [4] [Dueling Network Architectures for Deep Reinforcement Learning](https://arxiv.org/abs/1511.06581)
+
+#### Training Results soon...
