@@ -9,7 +9,9 @@ TensorFlow implementation of Deep Reinforcement Learning papers based on deep Q-
 [4] [Dueling Network Architectures for Deep Reinforcement Learning](https://arxiv.org/abs/1511.06581)
 
 ------------------------------------------------------------------
-#### Training Results soon...
+#### To Do:
+- update to tensorflow 1.+
+- add experimental results
 ---------------------------------------------------------
 #### Requirements:
 - Python 2.7x
