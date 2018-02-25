@@ -16,15 +16,15 @@ MAX_STEPS = AgentSetting.training_steps
 #use double DQN
 DOUBLE_DQN = True
 #use dueling DQN
-DUELING_DQN = True
+DUELING_DQN = False
 #prioritized experience replay PER
-PER = True
+PER = False
 
 #we are training
 TRAINING  = True # training =true , playing= false
 
 #WATCH Training LIVE
-RENDER = True
+RENDER = False
 
 def main():
 
