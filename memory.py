@@ -5,7 +5,7 @@ import random
 class ExperienceMemory(object):
 
     def __init__(self, state_shape ,buffer_size = 50000): # buff size = no. of exp tuples
-        buffer_size_init = 250000
+        buffer_size_init = buffer_size
         self.stateMem = np.empty([buffer_size_init,state_shape[0],state_shape[1],state_shape[2]])
         self.actionMem = np.empty([buffer_size_init],dtype = int)
         self.rewardMem = np.empty([buffer_size_init], dtype= float)
