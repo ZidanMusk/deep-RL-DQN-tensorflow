@@ -8,7 +8,7 @@ class AgentSetting():
 	minibatch = 32
 	
 	replay_strt_size = 50000 # at start use randm policy for this time to fill memory b4 learning
-	replay_memory = 1000000
+	replay_memory = 500000#1000000
 	
 	t_net_update_freq = 10000 #10000
 	
