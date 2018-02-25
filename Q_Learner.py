@@ -212,7 +212,7 @@ class DQN(object):
 	def _epsilonDecay(self,sess):
 
 		pass
-		eps = self.e_greedy_final + max(0,(self.e_greedy_init - self.e_greedy_final) * (self.e_final_at - self.agentSteps.eval()) / self.e_final_at)
+		eps = self.e_greedy_final + max(0,(self.e_greedy_init - self.e_greedy_final) * (self.e_final_at - self.global_step.eval()) / self.e_final_at)
 
 		sess.run(self.epsilonUpdater, feed_dict={self.epsilonHolder: eps})
 
@@ -348,7 +348,7 @@ class DQN(object):
 				self.updates +=1 #num of updates made per episode 
 
 			pass #TRY self.global_step.eval()
-			if ( self.agentSteps.eval() % self.t_net_update_freq == 0 ):
+			if ( self.global_step.eval() % self.t_net_update_freq == 0 ):
 
 				sess.run(self.deepNet.updateTparas(True))
 				print("Target net parameters updated!")
