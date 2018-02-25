@@ -83,7 +83,7 @@ class Utility(object):
 				self.saver_for_train = tf.train.Saver(keep_checkpoint_every_n_hours=2,
 													  max_to_keep=1)  # will save all the tf graph vars!!!
 				self.saver_for_play = tf.train.Saver(tf.trainable_variables(), keep_checkpoint_every_n_hours=2,
-													 max_to_keep=2)  # used after training
+													 max_to_keep=10)  # used after training
 				self.train_writer = tf.summary.FileWriter(self.trainSummaryDir)
 
 				self.latest_checkpoint = tf.train.latest_checkpoint(self.trainDir)
