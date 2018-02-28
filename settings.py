@@ -18,7 +18,7 @@ class AgentSetting():
 	
 	#nature paper:50 million frames to be trained on 
 	#double DQN paper: 200 million frames,ie, 50M steps 
-	training_steps = 5000000
+	training_steps = 1000000
 	
 	#RMSProp 
 	learning_rate = 0.00025 #not dueling
@@ -34,7 +34,7 @@ class AgentSetting():
 	e_greedy_init = 1.0
 	e_greedy_final = 0.1
 
-	e_final_at = 1000000 #training_steps // 50 #1000000 #steps over which epsilon is annealed to its final value
+	e_final_at = 100000#1000000 #training_steps // 50 #1000000 #steps over which epsilon is annealed to its final value
 
 	#TODO apply evalution every 1M steps!
 	no_op_max = 30 #max of no-op action
