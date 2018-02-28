@@ -7,7 +7,7 @@ from Q_Learner import DQN
 from settings import AgentSetting
 
 #gym env name
-ENV_NAME = 'Breakout-v0'
+ENV_NAME = 'Pong-v0'
 
 #save model every ? episodes
 SAVE_EVERY = 200
