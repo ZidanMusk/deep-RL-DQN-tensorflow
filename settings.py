@@ -5,7 +5,7 @@ class AgentSetting():
 	
 	''''commented values are the used ones in the nature paper, use them if you got that much of computing power'''
 
-	minibatch = 32
+	minibatch = 128
 	
 	replay_strt_size = 15000#50000 # at start use randm policy for this time to fill memory b4 learning
 	replay_memory = 50000#1000000
@@ -14,7 +14,7 @@ class AgentSetting():
 	
 	discount_factor = 0.99
 	
-	update_freq = 4 #update net every 4 actions
+	update_freq = 1 #update net every 4 actions
 	
 	#nature paper:50 million frames to be trained on 
 	#double DQN paper: 200 million frames,ie, 50M steps 
