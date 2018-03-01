@@ -167,12 +167,14 @@ class Utility(object):
 			feed_dict.update({self.lossTotalSummaryHolder : sumList['totLoss'], self.lossAvgSummaryHolder : sumList['avgLoss'], self.episodeUpdatesHolder : sumList['epUpdates']})
 			summary_str = sess.run(self.summary_merger, feed_dict=feed_dict)
 			self.train_writer.add_summary(summary_str, step)
+			self.train_writer.add_graph(sess.graph)
 			self.train_writer.flush()
 
 		else:
 
 			summary_str = sess.run(self.summary_merger, feed_dict=feed_dict)
 			self.play_writer.add_summary(summary_str, step)
+			self.play_writer.add_graph(sess.graph)
 			self.play_writer.flush()
 
 		print("Updating TensorBoard summaries...@step {}...".format(step))
